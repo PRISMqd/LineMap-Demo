@@ -11,39 +11,58 @@
 <style>
 :root {
   /* PrismDashpack — Main Theme */
-  --bg-deep: #9dc5bf;          /* slightly deeper than AFD4CF for body */
-  --bg-base: #AFD4CF;          /* primary background */
-  --bg-panel: #C9D9D6;         /* card / panel surface */
-  --bg-card: #F2F6F5;          /* elevated card */
+  --bg-deep: #9dc5bf;
+  --bg-base: #AFD4CF;
+  --bg-panel: #C9D9D6;
+  --bg-card: #F2F6F5;
   --bg-card-hover: #e8efed;
   --bg-overlay: rgba(30,42,40,0.88);
-  --border: rgba(94,142,136,0.25);
+  --border: rgba(94,142,136,0.28);
   --border-active: #5E8E88;
 
-  /* Text */
-  --text-primary: #1E2A28;     /* near-black teal */
-  --text-secondary: #4B5A57;
-  --text-muted: #5E8E88;
-  --text-dim: #8CAFA9;
+  /* Text — higher contrast */
+  --text-primary: #111C1A;
+  --text-secondary: #2E3E3C;
+  --text-muted: #4B6B66;
+  --text-dim: #7AADA6;
 
   /* Interactions & Accent */
   --accent: #5C9D8D;
   --accent-dim: rgba(92,157,141,0.18);
   --accent-deep: #3F6E67;
 
-  /* Alarm / State colors — PrismDashpack Alarms palette */
-  --c-safe: #218F67;
-  --c-safe-dim: rgba(33,143,103,0.14);
-  --c-warn: #D1C247;
-  --c-warn-dim: rgba(209,194,71,0.18);
-  --c-danger: #C22D4D;
-  --c-danger-dim: rgba(194,45,77,0.14);
-  --c-unknown: #4B90A6;
-  --c-unknown-dim: rgba(75,144,166,0.15);
-  --c-dedicated: #3F6E67;
-  --c-dedicated-dim: rgba(63,110,103,0.15);
+  /* ── STATE COLOR SEMANTICS (aviation/nuclear/anesthesia informed) ──
+     RED   = active incompatibility / conflict requiring action NOW
+     AMBER = caution, verify, attention needed — not urgent
+     GREEN = clear, available, no issues
+     BLACK = at capacity / offline / unavailable — not dangerous
+     BLUE  = informational, unverified, unknown
+     PURPLE/TEAL = dedicated therapy present
+     GRAY  = inactive, historical, do not use */
+  --c-conflict: #C22D4D;        /* RED — incompatible pairs only */
+  --c-conflict-dim: rgba(194,45,77,0.12);
+  --c-caution: #C8860A;         /* AMBER — caution/verify (darker for contrast) */
+  --c-caution-dim: rgba(200,134,10,0.14);
+  --c-clear: #1A7A4A;           /* GREEN — available/compatible */
+  --c-clear-dim: rgba(26,122,74,0.12);
+  --c-capacity: #1E2A28;        /* BLACK — at capacity, full, not dangerous */
+  --c-capacity-dim: rgba(30,42,40,0.12);
+  --c-info: #3E7FA3;            /* BLUE — informational/unverified */
+  --c-info-dim: rgba(62,127,163,0.14);
+  --c-dedicated: #5B4E8C;       /* PURPLE — dedicated therapy */
+  --c-dedicated-dim: rgba(91,78,140,0.14);
+  --c-ivpb: #2E6B8A;            /* IVPB indicator — steel blue */
+  --c-ivpb-dim: rgba(46,107,138,0.14);
 
-  /* Legacy accent-blue mapped to prism accent */
+  /* Legacy aliases for backward compat */
+  --c-safe: var(--c-clear);
+  --c-safe-dim: var(--c-clear-dim);
+  --c-warn: var(--c-caution);
+  --c-warn-dim: var(--c-caution-dim);
+  --c-danger: var(--c-conflict);
+  --c-danger-dim: var(--c-conflict-dim);
+  --c-unknown: var(--c-info);
+  --c-unknown-dim: var(--c-info-dim);
   --accent-blue: #3E7FA3;
   --accent-blue-dim: rgba(62,127,163,0.15);
 
@@ -52,7 +71,7 @@
   --font-sans: 'Inter', 'IBM Plex Sans', sans-serif;
   --radius: 8px;
   --radius-lg: 12px;
-  --action-bar: 64px;
+  --action-bar: 60px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
@@ -60,8 +79,10 @@ body {
   background: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  font-weight: 450;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
 /* ── scrollbars ── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -928,11 +949,12 @@ function computePatientState(patient) {
       }
     }
   }
-  if (hasDanger) return { state: 'unsafe', color: 'var(--c-danger)', label: 'UNSAFE' };
-  if (hasWarn) return { state: 'warn', color: 'var(--c-warn)', label: 'REVIEW' };
-  if (hasDedicated && !hasAvail) return { state: 'dedicated', color: 'var(--c-dedicated)', label: 'DEDICATED' };
-  if (hasAvail) return { state: 'safe', color: 'var(--c-safe)', label: 'CAPACITY AVAIL' };
-  return { state: 'at_cap', color: 'var(--c-warn)', label: 'AT CAPACITY' };
+  // Semiotics: RED = conflict only. BLACK = full. AMBER = caution. GREEN = clear.
+  if (hasDanger) return { state: 'conflict', color: 'var(--c-conflict)', label: 'VERIFY NOW', tooltip: 'One or more medications may be incompatible. Tap to review.' };
+  if (hasWarn)   return { state: 'caution',  color: 'var(--c-caution)', label: 'REVIEW',     tooltip: 'Combination requires attention or pharmacy verification.' };
+  if (hasDedicated && !hasAvail) return { state: 'dedicated', color: 'var(--c-dedicated)', label: 'DEDICATED', tooltip: 'All available lumens carry dedicated-line therapies.' };
+  if (hasAvail)  return { state: 'clear',    color: 'var(--c-clear)',   label: 'CAPACITY AVAILABLE', tooltip: 'Open lumens or Y-site capacity available.' };
+  return { state: 'at_cap', color: 'var(--c-capacity)', label: 'AT CAPACITY', tooltip: 'All lumens occupied. Y-site may still be available.' };
 }
 
 // ─────────────────────────────────────────────
@@ -1053,11 +1075,11 @@ function runAssignmentEngine(patient, newMed) {
 
   let overallState;
   if (safePlacements.length > 0) overallState = 'safe_capacity_available';
-  else if (cautionPlacements.length > 0) overallState = 'unsafe_reconfigurable';
-  else if (blockedPlacements.length > 0 && blockedPlacements.some(p => p.severity === 'policy')) overallState = 'unsafe_new_access_recommended';
+  else if (cautionPlacements.length > 0) overallState = 'review_reconfigurable';
+  else if (blockedPlacements.length > 0 && blockedPlacements.some(p => p.severity === 'policy')) overallState = 'new_access_recommended';
   else overallState = 'unresolvable_escalate';
 
-  if (overallState === 'unsafe_new_access_recommended' || overallState === 'unresolvable_escalate') {
+  if (overallState === 'new_access_recommended' || overallState === 'unresolvable_escalate') {
     recommendations.push({ action: 'New vascular access may be required', reason: `No compatible lumen identified for ${medData.display_name}`, target: 'vascular_access_team' });
   }
   if (cautionPlacements.length > 0 && safePlacements.length === 0) {
@@ -1107,25 +1129,28 @@ const SITE_COORDS = {
 };
 
 function lineDotColor(line) {
-  let hasDanger = false, hasDedicated = false, hasWarn = false, hasAvail = false;
+  let hasConflict=false, hasDedicated=false, hasCaution=false, hasAvail=false, atCapacity=false;
   for (const lumen of line.lumens) {
-    if (lumen.reservedFor || lumen.primaryStatus === 'dedicated') hasDedicated = true;
-    if (lumen.primaryStatus === 'available') hasAvail = true;
+    if (lumen.reservedFor || lumen.primaryStatus==='dedicated') hasDedicated=true;
+    if (lumen.primaryStatus==='available') hasAvail=true;
     const allMeds = [...lumen.currentAssignments, ...lumen.ySiteAssignments];
-    for (let i = 0; i < allMeds.length; i++) {
-      for (let j = i+1; j < allMeds.length; j++) {
-        const ctx = (allMeds[i].assignmentLevel==='ysite'||allMeds[j].assignmentLevel==='ysite') ? 'ySite' : 'sameLumen';
-        const c = getCompatibility(allMeds[i].medication, allMeds[j].medication, ctx);
-        if (c==='incompatible'||c==='avoid') hasDanger = true;
-        else if (c==='caution'||c==='unknown') hasWarn = true;
-      }
+    for (let i=0;i<allMeds.length;i++) for (let j=i+1;j<allMeds.length;j++) {
+      const ctx=(allMeds[i].assignmentLevel==='ysite'||allMeds[j].assignmentLevel==='ysite')?'ySite':'sameLumen';
+      const c=getCompatibility(allMeds[i].medication,allMeds[j].medication,ctx);
+      if (c==='incompatible'||c==='avoid') hasConflict=true;
+      else if (c==='caution') hasCaution=true;
+      // unknown = blue/info, not amber - don't alarm on unknown
     }
   }
-  if (hasDanger) return '#C22D4D';
-  if (hasDedicated && !hasAvail) return '#3F6E67';
-  if (hasWarn) return '#D1C247';
-  if (hasAvail) return '#218F67';
-  return '#4B90A6';
+  const allLumens = line.lumens;
+  const anyYsite = allLumens.some(l=>l.ySiteCapacity>0);
+  const fullyOccupied = !hasAvail && !anyYsite && allLumens.every(l=>l.primaryStatus!=='available');
+  if (hasConflict) return '#C22D4D';          // RED: conflict
+  if (hasDedicated&&!hasAvail&&!anyYsite) return '#5B4E8C'; // PURPLE: dedicated, full
+  if (hasCaution) return '#C8860A';            // AMBER: caution
+  if (hasAvail||anyYsite) return '#1A7A4A';    // GREEN: capacity available
+  if (fullyOccupied) return '#1E2A28';         // BLACK: at capacity, not dangerous
+  return '#3E7FA3';                            // BLUE: informational
 }
 
 function lineHasAlerts(line) {
@@ -1425,21 +1450,40 @@ function LinePopover({ line, allLines, onClose, onDCLine, dismissedAlerts, onDis
 function MedRow({ assignment, isYsite }) {
   const med = getMedById(assignment.medication);
   const name = med ? med.display_name : assignment.medication;
+  const isIVPB = assignment.continuousVsIntermittent==='intermittent' || med?.continuous_or_intermittent==='intermittent';
+  const isVes = medIsVesicant(med||assignment);
+  const isDed = medRequiresDedicated(med||assignment);
+  const needsFilt = medRequiresFilter(med||assignment);
+  const needsCent = medRequiresCentral(med||assignment);
   return (
-    <div style={{ display:'flex', alignItems:'flex-start', gap:7, padding:'5px 8px', borderRadius:6, background: isYsite ? 'rgba(62,127,163,0.08)' : 'rgba(92,157,141,0.08)', border:`1px solid ${isYsite ? 'rgba(62,127,163,0.2)' : 'rgba(92,157,141,0.2)'}` }}>
-      <span style={{ fontSize:9, fontFamily:'var(--font-mono)', fontWeight:700, padding:'2px 4px', borderRadius:3, background: isYsite ? 'var(--accent-blue-dim)' : 'var(--accent-dim)', color: isYsite ? 'var(--accent-blue)' : 'var(--accent)', flexShrink:0, marginTop:1 }}>{isYsite?'Y':'P'}</span>
+    <div style={{ display:'flex', alignItems:'flex-start', gap:7, padding:'6px 9px', borderRadius:6,
+      background: isYsite ? 'rgba(62,127,163,0.08)' : 'rgba(92,157,141,0.08)',
+      border:`1px solid ${isYsite ? 'rgba(62,127,163,0.2)' : 'rgba(92,157,141,0.2)'}` }}>
+      {/* Mode badge: P/Y + cont/IVPB */}
+      <div style={{ display:'flex', flexDirection:'column', gap:2, flexShrink:0, marginTop:1 }}>
+        <span style={{ fontSize:9, fontFamily:'var(--font-mono)', fontWeight:700, padding:'2px 4px', borderRadius:3,
+          background: isYsite ? 'var(--accent-blue-dim)' : 'var(--accent-dim)',
+          color: isYsite ? 'var(--accent-blue)' : 'var(--accent)' }}>{isYsite?'Y':'P'}</span>
+        {isIVPB && <span style={{ fontSize:8, fontFamily:'var(--font-mono)', fontWeight:700, padding:'1px 4px', borderRadius:3, background:'var(--c-ivpb-dim)', color:'var(--c-ivpb)', border:'1px solid rgba(46,107,138,0.3)' }} title="Intermittent IV piggyback">IVPB</span>}
+      </div>
       <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontSize:12, fontWeight:600, color:'var(--text-primary)' }}>{name}</div>
+        <div style={{ fontSize:13, fontWeight:700, color:'var(--text-primary)', letterSpacing:'-0.01em' }}>{name}</div>
         {(assignment.dose || assignment.rate) && (
-          <div style={{ fontSize:10, color:'var(--text-muted)', marginTop:1 }}>
-            {assignment.dose}{assignment.rate ? ` · ${assignment.rate}` : ''}{assignment.continuousVsIntermittent ? ` · ${assignment.continuousVsIntermittent}` : ''}
+          <div style={{ fontSize:11, color:'var(--text-secondary)', marginTop:1 }}>
+            {assignment.dose}{assignment.rate ? ` · ${assignment.rate}` : ''}
+            {!isIVPB && assignment.continuousVsIntermittent ? ` · ${assignment.continuousVsIntermittent}` : ''}
           </div>
         )}
-        <div style={{ display:'flex', gap:3, flexWrap:'wrap', marginTop:3 }}>
-          {medIsVesicant(med||assignment) && <span style={{ fontSize:9, padding:'1px 5px', borderRadius:3, background:'rgba(194,45,77,0.12)', border:'1px solid rgba(194,45,77,0.4)', color:'#C22D4D', fontFamily:'var(--font-mono)', fontWeight:600 }}>VESICANT</span>}
-          {medRequiresFilter(med||assignment) && <span style={{ fontSize:9, padding:'1px 5px', borderRadius:3, background:'rgba(209,194,71,0.15)', border:'1px solid rgba(209,194,71,0.5)', color:'#8a7b00', fontFamily:'var(--font-mono)', fontWeight:600 }}>FILTER {medFilterSize(med||assignment)||''}</span>}
-          {medRequiresCentral(med||assignment) && <span style={{ fontSize:9, padding:'1px 5px', borderRadius:3, background:'rgba(63,110,103,0.12)', border:'1px solid rgba(63,110,103,0.4)', color:'#3F6E67', fontFamily:'var(--font-mono)', fontWeight:600 }}>CENTRAL</span>}
-          {medRequiresDedicated(med||assignment) && <span style={{ fontSize:9, padding:'1px 5px', borderRadius:3, background:'rgba(63,110,103,0.15)', border:'1px solid rgba(63,110,103,0.5)', color:'#3F6E67', fontFamily:'var(--font-mono)', fontWeight:600 }}>DEDICATED</span>}
+        {isIVPB && (
+          <div style={{ fontSize:10, color:'var(--c-ivpb)', marginTop:2, fontStyle:'italic' }}>
+            IVPB via dedicated set → Y-sites to carrier
+          </div>
+        )}
+        <div style={{ display:'flex', gap:3, flexWrap:'wrap', marginTop:4 }}>
+          {isVes    && <span title="Vesicant — extravasation risk" style={{ fontSize:9, padding:'2px 6px', borderRadius:3, background:'var(--c-conflict-dim)', border:'1px solid rgba(194,45,77,0.4)', color:'var(--c-conflict)', fontFamily:'var(--font-mono)', fontWeight:700 }}>⚠ VESICANT</span>}
+          {needsFilt && <span title={`Requires ${medFilterSize(med||assignment)||'in-line'} filter`} style={{ fontSize:9, padding:'2px 6px', borderRadius:3, background:'var(--c-caution-dim)', border:'1px solid rgba(200,134,10,0.4)', color:'var(--c-caution)', fontFamily:'var(--font-mono)', fontWeight:700 }}>FILTER {medFilterSize(med||assignment)||'req.'}</span>}
+          {needsCent && <span title="Central access preferred" style={{ fontSize:9, padding:'2px 6px', borderRadius:3, background:'rgba(63,110,103,0.12)', border:'1px solid rgba(63,110,103,0.4)', color:'var(--accent-deep)', fontFamily:'var(--font-mono)', fontWeight:700 }}>CENTRAL</span>}
+          {isDed    && <span title="Dedicated lumen required" style={{ fontSize:9, padding:'2px 6px', borderRadius:3, background:'var(--c-dedicated-dim)', border:'1px solid rgba(91,78,140,0.4)', color:'var(--c-dedicated)', fontFamily:'var(--font-mono)', fontWeight:700 }}>DEDICATED</span>}
         </div>
       </div>
     </div>
@@ -1623,6 +1667,170 @@ function DCPromptModal({ prompt, setPrompt, onConfirm, allLines }) {
   return null;
 }
 
+
+// ─────────────────────────────────────────────
+// MED SUMMARY PANEL — all running meds at a glance
+// ─────────────────────────────────────────────
+function MedSummaryPanel({ patient, onSelectLine, dismissedAlerts, open, onToggle }) {
+  const allAssignments = [];
+  for (const line of patient.activeLines) {
+    for (const lumen of line.lumens) {
+      for (const a of lumen.currentAssignments) {
+        allAssignments.push({ ...a, line, lumen, isYsite:false });
+      }
+      for (const a of lumen.ySiteAssignments) {
+        allAssignments.push({ ...a, line, lumen, isYsite:true });
+      }
+    }
+  }
+
+  // Group by class for visual organization
+  const grouped = {};
+  for (const item of allAssignments) {
+    const med = getMedById(item.medication);
+    const cls = med?.class || 'other';
+    if (!grouped[cls]) grouped[cls] = [];
+    grouped[cls].push({ ...item, med });
+  }
+
+  const CLASS_LABELS = {
+    vasopressor:'Vasopressors', sedative:'Sedation', opioid:'Analgesics',
+    antibiotic:'Antibiotics', anticoagulant:'Anticoagulants', nutrition:'Nutrition',
+    blood_product:'Blood Products', electrolyte:'Electrolytes', fluid:'Fluids',
+    benzodiazepine:'Sedation', antiarrhythmic:'Antiarrhythmics', endocrine:'Endocrine',
+    diuretic:'Diuretics', other:'Other',
+  };
+  // Priority order for display
+  const CLASS_ORDER = ['vasopressor','sedative','opioid','benzodiazepine','anticoagulant','antiarrhythmic','antibiotic','endocrine','diuretic','electrolyte','nutrition','blood_product','fluid','other'];
+
+  const sortedClasses = Object.keys(grouped).sort((a,b) => {
+    const ai = CLASS_ORDER.indexOf(a); const bi = CLASS_ORDER.indexOf(b);
+    return (ai===-1?99:ai) - (bi===-1?99:bi);
+  });
+
+  return (
+    <div style={{
+      background:'#F2F6F5', borderTop:'2px solid var(--accent-deep)',
+      flexShrink:0, overflow:'hidden',
+      transition:'max-height 0.25s ease',
+      maxHeight: open ? 260 : 0,
+    }}>
+      <div style={{ overflowY:'auto', maxHeight:260, padding:'10px 16px' }}>
+        {allAssignments.length === 0 ? (
+          <div style={{ fontSize:13, color:'var(--text-dim)', fontStyle:'italic', padding:'8px 0' }}>No active infusions</div>
+        ) : (
+          <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+            {sortedClasses.map(cls => (
+              <div key={cls} style={{ display:'flex', flexDirection:'column', gap:3, minWidth:140 }}>
+                <div style={{ fontSize:9, fontFamily:'var(--font-mono)', fontWeight:700, color:'var(--text-dim)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:2 }}>
+                  {CLASS_LABELS[cls]||cls}
+                </div>
+                {grouped[cls].map((item, i) => {
+                  const med = item.med;
+                  const isIVPB = item.continuousVsIntermittent==='intermittent' || med?.continuous_or_intermittent==='intermittent';
+                  const isVes = medIsVesicant(med||item);
+                  const isDed = medRequiresDedicated(med||item);
+                  const needsFilter = medRequiresFilter(med||item);
+                  // Check for conflict with other meds on same lumen
+                  const lumenMeds = [...item.lumen.currentAssignments, ...item.lumen.ySiteAssignments];
+                  let hasConflict = false, hasCaution = false;
+                  for (const other of lumenMeds) {
+                    if (other.medication === item.medication) continue;
+                    const ctx = item.isYsite ? 'ySite' : 'sameLumen';
+                    const c = getCompatibility(item.medication, other.medication, ctx);
+                    if (c==='incompatible'||c==='avoid') hasConflict=true;
+                    else if (c==='caution') hasCaution=true;
+                  }
+                  return (
+                    <div key={i}
+                      onClick={() => onSelectLine(item.line)}
+                      style={{
+                        display:'flex', alignItems:'center', gap:5,
+                        padding:'4px 8px', borderRadius:6, cursor:'pointer',
+                        background: hasConflict ? 'rgba(194,45,77,0.1)' : hasCaution ? 'rgba(200,134,10,0.1)' : 'rgba(92,157,141,0.08)',
+                        border: `1px solid ${hasConflict?'rgba(194,45,77,0.35)':hasCaution?'rgba(200,134,10,0.3)':'rgba(92,157,141,0.2)'}`,
+                        transition:'background 0.1s',
+                      }}
+                      onMouseOver={e => e.currentTarget.style.background = hasConflict?'rgba(194,45,77,0.18)':hasCaution?'rgba(200,134,10,0.18)':'rgba(92,157,141,0.18)'}
+                      onMouseOut={e => e.currentTarget.style.background = hasConflict?'rgba(194,45,77,0.1)':hasCaution?'rgba(200,134,10,0.1)':'rgba(92,157,141,0.08)'}
+                    >
+                      {/* Status dot */}
+                      <div style={{ width:7, height:7, borderRadius:'50%', flexShrink:0,
+                        background: hasConflict?'#C22D4D':hasCaution?'#C8860A':'#1A7A4A' }} />
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:12, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                          {med?.display_name || item.medication}
+                        </div>
+                        <div style={{ fontSize:10, color:'var(--text-muted)' }}>
+                          {item.line.display_label} · {item.lumen.label}
+                          {item.isYsite && ' · Y'}
+                        </div>
+                      </div>
+                      {/* Semiotic tags */}
+                      <div style={{ display:'flex', gap:2, flexShrink:0 }}>
+                        {isIVPB && <span title="Intermittent / IVPB" style={{ fontSize:8, padding:'1px 4px', borderRadius:3, background:'var(--c-ivpb-dim)', color:'var(--c-ivpb)', fontFamily:'var(--font-mono)', fontWeight:700, border:'1px solid rgba(46,107,138,0.3)' }}>IVPB</span>}
+                        {isVes  && <span title="Vesicant" style={{ fontSize:8, padding:'1px 4px', borderRadius:3, background:'var(--c-conflict-dim)', color:'var(--c-conflict)', fontFamily:'var(--font-mono)', fontWeight:700, border:'1px solid rgba(194,45,77,0.3)' }}>V</span>}
+                        {isDed  && <span title="Dedicated lumen required" style={{ fontSize:8, padding:'1px 4px', borderRadius:3, background:'var(--c-dedicated-dim)', color:'var(--c-dedicated)', fontFamily:'var(--font-mono)', fontWeight:700, border:'1px solid rgba(91,78,140,0.3)' }}>D</span>}
+                        {needsFilter && <span title="Filter required" style={{ fontSize:8, padding:'1px 4px', borderRadius:3, background:'var(--c-caution-dim)', color:'var(--c-caution)', fontFamily:'var(--font-mono)', fontWeight:700, border:'1px solid rgba(200,134,10,0.3)' }}>F</span>}
+                        {hasConflict && <span title="Verify — incompatible pairing" style={{ fontSize:8, padding:'1px 4px', borderRadius:3, background:'var(--c-conflict-dim)', color:'var(--c-conflict)', fontFamily:'var(--font-mono)', fontWeight:700 }}>!</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// State indicator pill — clickable, shows OMO explanation
+function StateIndicator({ state, color, label, tooltip, onClick }) {
+  const [showTip, setShowTip] = useState(false);
+  const ICONS = { conflict:'⬤', caution:'▲', clear:'●', dedicated:'◈', at_cap:'◉', caution_info:'ℹ' };
+  return (
+    <div style={{ position:'relative', display:'inline-flex', alignItems:'center' }}>
+      <button
+        onClick={() => { setShowTip(t=>!t); if(onClick) onClick(); }}
+        style={{
+          display:'inline-flex', alignItems:'center', gap:5,
+          padding:'4px 11px', borderRadius:6, cursor:'pointer',
+          background:`${color}18`, border:`1.5px solid ${color}55`,
+          color, fontWeight:700, fontSize:11, fontFamily:'var(--font-mono)',
+          letterSpacing:'0.04em',
+        }}
+        title={tooltip}
+      >
+        <span style={{ fontSize:8 }}>{ICONS[state]||'●'}</span>
+        {label}
+        <span style={{ fontSize:10, opacity:0.7 }}>?</span>
+      </button>
+      {showTip && (
+        <div style={{
+          position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:100,
+          background:'#1E2A28', color:'#F2F6F5', borderRadius:8, padding:'10px 14px',
+          fontSize:12, lineHeight:1.5, maxWidth:260, boxShadow:'0 4px 20px rgba(0,0,0,0.3)',
+        }}
+          onClick={() => setShowTip(false)}
+        >
+          <div style={{ fontWeight:700, marginBottom:4 }}>{label}</div>
+          <div style={{ color:'rgba(242,246,245,0.8)' }}>{tooltip || 'No additional information.'}</div>
+          <div style={{ fontSize:10, color:'rgba(242,246,245,0.4)', marginTop:6 }}>Tap to dismiss</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Auto-save draft store (session-level)
+const DRAFT_STORE = {};
+function saveDraft(key, data) { DRAFT_STORE[key] = { data, savedAt: new Date().toLocaleTimeString() }; }
+function loadDraft(key) { return DRAFT_STORE[key] || null; }
+function clearDraft(key) { delete DRAFT_STORE[key]; }
+function listDrafts() { return Object.entries(DRAFT_STORE).map(([k,v])=>({key:k,...v})); }
+
 function PatientWorkspace({ patient: initPatient, onBack, auditLog, setAuditLog }) {
   const [patient, setPatient] = useState(initPatient);
   const [selectedLine, setSelectedLine] = useState(null);
@@ -1632,7 +1840,9 @@ function PatientWorkspace({ patient: initPatient, onBack, auditLog, setAuditLog 
   const [showAudit, setShowAudit] = useState(false);
   const [toast, setToast] = useState(null);
   const [dismissedAlerts, setDismissedAlerts] = useState(new Set());
-  const [dcPrompt, setDcPrompt] = useState(null); // { line, step:'choice'|'selectMeds', checked:Set }
+  const [dcPrompt, setDcPrompt] = useState(null);
+  const [showMedSummary, setShowMedSummary] = useState(false);
+  const [drafts, setDrafts] = useState([]);
   const doubleTapRef = useRef({});
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
@@ -1758,77 +1968,127 @@ function PatientWorkspace({ patient: initPatient, onBack, auditLog, setAuditLog 
   const availLumens = patient.activeLines.reduce((s,l) => s+l.lumens.filter(lu=>lu.primaryStatus==='available').length, 0);
   const ysiteSlots  = patient.activeLines.reduce((s,l) => s+l.lumens.reduce((ss,lu)=>ss+(lu.ySiteCapacity||0),0), 0);
 
-  // Available lumen location labels for summary bar
-  const availLocations = patient.activeLines
-    .filter(l => l.lumens.some(lu => lu.primaryStatus==='available' || lu.ySiteCapacity>0))
-    .map(l => {
-      const open = l.lumens.filter(lu=>lu.primaryStatus==='available');
-      const ysite = l.lumens.filter(lu=>lu.ySiteCapacity>0 && lu.primaryStatus!=='available');
-      const parts = [];
-      if (open.length) parts.push(`${open.map(lu=>lu.label).join(', ')}`);
-      if (ysite.length) parts.push(`Y-site`);
-      return { line: l, desc: parts.join(' · ') };
-    });
+  // Capacity displayed in summary bar lumen pills
 
   const SVG_W = 220, SVG_H = 480;
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden' }}>
       {/* Summary bar */}
-      <div style={{ padding:'10px 20px', background:'#C9D9D6', borderBottom:'1px solid var(--border)', display:'flex', alignItems:'flex-start', gap:16, flexShrink:0 }}>
-        <button className="nav-back" onClick={onBack} style={{ alignSelf:'center' }}>← Patients</button>
-        <div className="topbar-divider" style={{ alignSelf:'center' }} />
-        <div>
-          <div style={{ fontSize:15, fontWeight:700 }}>{patient.name}</div>
-          <div style={{ fontSize:11, color:'var(--text-muted)', fontFamily:'var(--font-mono)' }}>{patient.location} · {patient.service} · {patient.acuityFlag?.toUpperCase()} ACUITY</div>
-        </div>
-        <div style={{ flex:1 }} />
-        <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4 }}>
-          <div style={{ display:'flex', gap:6, flexWrap:'wrap', justifyContent:'flex-end' }}>
-            <div style={{ fontSize:11, fontFamily:'var(--font-mono)', padding:'3px 9px', borderRadius:20, border:`1px solid ${availLumens>0?'#218F67':'var(--border)'}`, color:availLumens>0?'#218F67':'var(--text-muted)' }}>
-              {availLumens} lumen{availLumens!==1?'s':''} open
-            </div>
-            {ysiteSlots>0 && <div style={{ fontSize:11, fontFamily:'var(--font-mono)', padding:'3px 9px', borderRadius:20, border:'1px solid var(--accent-blue)', color:'var(--accent-blue)' }}>{ysiteSlots} Y-site{ysiteSlots!==1?'s':''}</div>}
-            <div style={{ fontSize:11, fontFamily:'var(--font-mono)', fontWeight:700, padding:'3px 10px', borderRadius:6, background:patState.color+'18', border:`1px solid ${patState.color}55`, color:patState.color }}>{patState.label}</div>
+      <div style={{ background:'#C9D9D6', borderBottom:'1px solid var(--border)', flexShrink:0 }}>
+        {/* Row 1: patient identity + state */}
+        <div style={{ padding:'8px 16px', display:'flex', alignItems:'center', gap:12 }}>
+          <button className="nav-back" onClick={onBack}>← Patients</button>
+          <div style={{ width:1, height:20, background:'var(--border)' }} />
+          <div>
+            <div style={{ fontSize:15, fontWeight:700, lineHeight:1.2 }}>{patient.name}</div>
+            <div style={{ fontSize:11, color:'var(--text-muted)', fontFamily:'var(--font-mono)' }}>{patient.location} · {patient.service}</div>
           </div>
-          {availLocations.length > 0 && (
-            <div style={{ fontSize:11, color:'var(--text-secondary)', display:'flex', gap:6, flexWrap:'wrap', justifyContent:'flex-end' }}>
-              <span style={{ color:'var(--text-muted)' }}>Available:</span>
-              {availLocations.map((al,i) => (
-                <span key={i} style={{ cursor:'pointer', textDecoration:'underline dotted', color:'#218F67' }} onClick={() => setSelectedLine(al.line)}>
-                  {al.line.display_label} ({al.desc})
-                </span>
-              ))}
-            </div>
+          <div style={{ flex:1 }} />
+          <StateIndicator state={patState.state} color={patState.color} label={patState.label} tooltip={patState.tooltip} />
+          <button
+            onClick={() => setShowMedSummary(s=>!s)}
+            style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px', borderRadius:8,
+              background: showMedSummary ? 'var(--accent-deep)' : 'rgba(63,110,103,0.12)',
+              border:'1.5px solid var(--accent-deep)', color: showMedSummary ? '#F2F6F5' : 'var(--accent-deep)',
+              cursor:'pointer', fontFamily:'var(--font-sans)', fontSize:12, fontWeight:700 }}
+          >
+            {showMedSummary ? '▾' : '▸'} All Meds ({patient.activeLines.reduce((s,l)=>s+l.lumens.reduce((ss,lu)=>ss+lu.currentAssignments.length+lu.ySiteAssignments.length,0),0)})
+          </button>
+        </div>
+        {/* Row 2: capacity strip — each lumen as a named pill */}
+        <div style={{ padding:'0 16px 8px', display:'flex', gap:5, flexWrap:'wrap' }}>
+          {patient.activeLines.flatMap(line =>
+            line.lumens.map(lumen => {
+              const isAvail = lumen.primaryStatus==='available';
+              const hasYsite = lumen.ySiteCapacity>0 && lumen.ySiteStatus!=='blocked';
+              const isDed = lumen.primaryStatus==='dedicated'||lumen.reservedFor;
+              const isFull = !isAvail && lumen.ySiteCapacity===0;
+              let bg, border, col, icon;
+              if (isFull && !isDed) { bg='rgba(30,42,40,0.12)'; border='rgba(30,42,40,0.35)'; col='#1E2A28'; icon='●'; }
+              else if (isDed) { bg='rgba(91,78,140,0.12)'; border='rgba(91,78,140,0.4)'; col='#5B4E8C'; icon='◈'; }
+              else if (isAvail) { bg='rgba(26,122,74,0.12)'; border='rgba(26,122,74,0.4)'; col='#1A7A4A'; icon='○'; }
+              else if (hasYsite) { bg='rgba(62,127,163,0.12)'; border='rgba(62,127,163,0.4)'; col='#3E7FA3'; icon='⊕'; }
+              else { bg='rgba(94,142,136,0.1)'; border='var(--border)'; col='var(--text-muted)'; icon='·'; }
+              const label = isAvail ? 'Open' : hasYsite && !isAvail ? 'Y-site' : isDed ? 'Ded.' : 'Full';
+              return (
+                <button key={lumen.lumenId}
+                  onClick={() => setSelectedLine(line)}
+                  style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 9px', borderRadius:20,
+                    background:bg, border:`1px solid ${border}`, color:col, cursor:'pointer',
+                    fontSize:11, fontFamily:'var(--font-sans)', fontWeight:600,
+                  }}
+                  title={`${line.display_label} · ${lumen.label} — ${label}`}
+                >
+                  <span style={{ fontSize:9 }}>{icon}</span>
+                  <span style={{ maxWidth:80, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                    {line.display_label.length > 14 ? line.lineType : line.display_label} · {lumen.label}
+                  </span>
+                  <span style={{ fontSize:10, opacity:0.8 }}>{label}</span>
+                </button>
+              );
+            })
           )}
         </div>
       </div>
+
+      {/* Med summary collapsible */}
+      <MedSummaryPanel patient={patient} onSelectLine={setSelectedLine} dismissedAlerts={dismissedAlerts} open={showMedSummary} onToggle={() => setShowMedSummary(s=>!s)} />
 
       {/* Body map — full remaining height, relative for popover */}
       <div style={{ flex:1, overflow:'hidden', position:'relative', background:'var(--bg-base)', display:'flex', alignItems:'flex-start', justifyContent:'center', paddingTop:20 }}>
         {/* SVG body + dots */}
         <div style={{ position:'relative', width:SVG_W, flexShrink:0 }}>
           <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} width={SVG_W} height={SVG_H} style={{ display:'block' }}>
-            {/* Body silhouette */}
-            <g opacity="0.22" fill="#5E8E88">
-              <ellipse cx="110" cy="32" rx="26" ry="30" />
-              <rect x="96" y="58" width="19" height="22" rx="5" />
-              <rect x="70" y="78" width="78" height="126" rx="14" />
-              <ellipse cx="61" cy="93" rx="16" ry="14" />
-              <ellipse cx="159" cy="93" rx="16" ry="14" />
-              <rect x="43" y="99" width="24" height="72" rx="12" />
-              <rect x="153" y="99" width="24" height="72" rx="12" />
-              <rect x="41" y="174" width="20" height="64" rx="10" />
-              <rect x="159" y="174" width="20" height="64" rx="10" />
-              <ellipse cx="51" cy="250" rx="13" ry="17" />
-              <ellipse cx="169" cy="250" rx="13" ry="17" />
-              <rect x="72" y="200" width="73" height="54" rx="12" />
-              <rect x="70" y="250" width="29" height="84" rx="12" />
-              <rect x="121" y="250" width="29" height="84" rx="12" />
-              <rect x="72" y="332" width="22" height="84" rx="10" />
-              <rect x="126" y="332" width="22" height="84" rx="10" />
-              <ellipse cx="83" cy="421" rx="19" ry="11" />
-              <ellipse cx="137" cy="421" rx="19" ry="11" />
+            <defs>
+              <radialGradient id="bodyGrad" cx="50%" cy="40%" r="60%">
+                <stop offset="0%" stopColor="#7AADA6" stopOpacity="0.3"/>
+                <stop offset="100%" stopColor="#5E8E88" stopOpacity="0.15"/>
+              </radialGradient>
+            </defs>
+            {/* Human body — front view, anatomically proportioned */}
+            <g fill="url(#bodyGrad)" stroke="#5E8E88" strokeWidth="1" strokeOpacity="0.3">
+              {/* Head */}
+              <ellipse cx="110" cy="26" rx="20" ry="24" />
+              {/* Neck */}
+              <rect x="103" y="48" width="14" height="16" rx="4" />
+              {/* Shoulders */}
+              <ellipse cx="76" cy="72" rx="18" ry="10" />
+              <ellipse cx="144" cy="72" rx="18" ry="10" />
+              {/* Torso — tapered */}
+              <path d="M78 66 L142 66 L148 82 L152 120 L148 160 L70 160 L66 120 L68 82 Z" />
+              {/* Clavicle area highlight */}
+              <path d="M90 64 Q110 60 130 64" fill="none" stroke="#5E8E88" strokeWidth="1.5" strokeOpacity="0.4" />
+              {/* Pelvis */}
+              <ellipse cx="110" cy="170" rx="40" ry="18" />
+              {/* Right upper arm (viewer's left = patient's right) */}
+              <rect x="52" y="74" width="18" height="62" rx="9" />
+              {/* Left upper arm */}
+              <rect x="150" y="74" width="18" height="62" rx="9" />
+              {/* Right forearm */}
+              <rect x="50" y="140" width="15" height="58" rx="7" />
+              {/* Left forearm */}
+              <rect x="155" y="140" width="15" height="58" rx="7" />
+              {/* Right hand */}
+              <ellipse cx="57" cy="210" rx="10" ry="14" />
+              {/* Left hand */}
+              <ellipse cx="163" cy="210" rx="10" ry="14" />
+              {/* Right thigh */}
+              <rect x="72" y="182" width="28" height="80" rx="13" />
+              {/* Left thigh */}
+              <rect x="120" y="182" width="28" height="80" rx="13" />
+              {/* Right shin */}
+              <rect x="74" y="256" width="22" height="80" rx="10" />
+              {/* Left shin */}
+              <rect x="124" y="256" width="22" height="80" rx="10" />
+              {/* Right foot */}
+              <ellipse cx="85" cy="345" rx="20" ry="10" />
+              {/* Left foot */}
+              <ellipse cx="135" cy="345" rx="20" ry="10" />
+              {/* Facial features — minimal */}
+              <ellipse cx="103" cy="24" rx="3" ry="3.5" fill="#5E8E88" fillOpacity="0.3" />
+              <ellipse cx="117" cy="24" rx="3" ry="3.5" fill="#5E8E88" fillOpacity="0.3" />
+              <path d="M105 33 Q110 36 115 33" fill="none" stroke="#5E8E88" strokeWidth="1" strokeOpacity="0.3" />
             </g>
             {/* Double-tap zones for each named site */}
             {Object.entries(SITE_COORDS).map(([site, coord]) => {
@@ -1984,8 +2244,8 @@ function AddMedOverlay({ patient, onClose, onAdd, setAuditLog }) {
     line.lumens.map(l => ({ ...l, lineLabel: line.display_label, lineId: line.lineId }))
   );
 
-  const stateColors = { safe_capacity_available:'var(--c-safe)', unsafe_reconfigurable:'var(--c-warn)', unsafe_new_access_recommended:'var(--c-danger)', unresolvable_escalate:'var(--c-danger)' };
-  const stateLabels = { safe_capacity_available:'SAFE PLACEMENT AVAILABLE', unsafe_reconfigurable:'REVIEW REQUIRED', unsafe_new_access_recommended:'NEW ACCESS MAY BE NEEDED', unresolvable_escalate:'ESCALATE — NO SAFE PLACEMENT' };
+  const stateColors = { safe_capacity_available:'var(--c-safe)', review_reconfigurable:'var(--c-warn)', new_access_recommended:'var(--c-danger)', unresolvable_escalate:'var(--c-danger)' };
+  const stateLabels = { safe_capacity_available:'SAFE PLACEMENT AVAILABLE', review_reconfigurable:'REVIEW REQUIRED', new_access_recommended:'NEW ACCESS MAY BE NEEDED', unresolvable_escalate:'ESCALATE — NO SAFE PLACEMENT' };
 
   return (
     <div className="overlay-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -2108,7 +2368,7 @@ function AddMedOverlay({ patient, onClose, onAdd, setAuditLog }) {
 
           {/* Engine result */}
           {engineResult && (
-            <div className={`placement-result ${engineResult.overallState === 'safe_capacity_available' ? 'safe' : engineResult.overallState === 'unsafe_reconfigurable' ? 'warn' : 'danger'}`}>
+            <div className={`placement-result ${engineResult.overallState === 'safe_capacity_available' ? 'safe' : engineResult.overallState === 'review_reconfigurable' ? 'warn' : 'danger'}`}>
               <div className="placement-state-label" style={{ color: stateColors[engineResult.overallState] }}>
                 {stateLabels[engineResult.overallState]}
               </div>
@@ -2218,8 +2478,10 @@ function AddLineOverlay({ prefill, onClose, onAdd, onAddMed, patient, setAuditLo
   const updateLumenCount = (n) => {
     const count = Math.max(1, parseInt(n) || 1);
     const lumens = Array.from({ length: count }, (_, i) => form.lumens[i] || { label: `Lumen ${i+1}`, size: '' });
-    setForm(f => ({ ...f, lumenCount: count, lumens }));
+    setForm(f => { const nf={...f, lumenCount:count, lumens}; saveDraft('add_line', nf); return nf; });
   };
+  // Auto-save on any field change
+  const updateForm = (updates) => setForm(f => { const nf={...f,...updates}; saveDraft('add_line', nf); return nf; });
 
   const handleAdd = () => {
     const newLine = {
@@ -2952,7 +3214,12 @@ function PatientList({ patients, onSelect, onQuickCheck }) {
           <div className="pl-subtitle">{patients.length} patients · LineLogic ICU View</div>
         </div>
         <div style={{ flex:1 }} />
-        <button className="btn btn-qc btn-sm" onClick={onQuickCheck}>⚡ Quick Check</button>
+        {listDrafts().length > 0 && (
+          <button style={{ fontSize:11, padding:'4px 10px', borderRadius:6, background:'rgba(200,134,10,0.12)', border:'1px solid rgba(200,134,10,0.4)', color:'#C8860A', cursor:'pointer', fontFamily:'var(--font-sans)', fontWeight:600 }}
+            title="Unsaved entries from this session">
+            ✏ {listDrafts().length} draft{listDrafts().length!==1?'s':''}
+          </button>
+        )}
         <button className="btn btn-ghost btn-sm">+ New Patient</button>
       </div>
       <div className="pl-body">
@@ -2973,7 +3240,7 @@ function PatientList({ patients, onSelect, onQuickCheck }) {
                 <div className="pl-meta">{patient.service} · {totalLines} line{totalLines !== 1?'s':''} · {totalMeds} active infusion{totalMeds !== 1?'s':''}</div>
               </div>
               <div className="pl-badges">
-                <span className={`pl-badge ${badgeClass}`}>{ps.label}</span>
+                <span className={`pl-badge ${badgeClass}`} title={ps.tooltip}>{ps.label.length>12?ps.label.slice(0,12)+'…':ps.label}</span>
                 {patient.acuityFlag === 'high' && <span className="pl-badge badge-danger">HIGH ACUITY</span>}
                 {patient.activeLines.some(l => l.lumens.some(lu => lu.currentAssignments.some(a => a.vesicant))) && (
                   <span className="pl-badge badge-warn">VESICANT</span>
@@ -3018,6 +3285,9 @@ function App() {
         <div className="topbar-divider" />
         <div className="topbar-section">PRISMqd LineLogic</div>
         <div className="topbar-spacer" />
+        <button className="btn btn-qc btn-sm" onClick={() => setShowQuickCheck(q=>!q)} style={{fontSize:12}}>
+          ⚡ Quick Check
+        </button>
         <Clock />
       </div>
 
