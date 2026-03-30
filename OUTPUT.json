@@ -1,0 +1,37 @@
+{
+  "overall_state": "safe_capacity_available | safe_at_capacity | unsafe_reconfigurable | unresolvable_escalate",
+
+  "assignments": [
+    {
+      "medication": "med_id",
+      "line_id": "line_id",
+      "lumen_id": "lumen_id"
+    }
+  ],
+
+  "unassigned_medications": ["med_id"],
+
+  "alerts": [
+    {
+      "severity": "hard | moderate | soft",
+      "scope": "patient | line | lumen | medication",
+      "target": "id",
+      "message": "string"
+    }
+  ],
+
+  "recommended_actions": [
+    {
+      "action": "add_line | move_med | escalate | delay",
+      "reason": "string",
+      "target": "optional"
+    }
+  ],
+
+  "line_summary": {
+    "total_lines": 2,
+    "total_lumens": 4,
+    "usable_lumens_now": 3,
+    "safe_available_for_additional_continuous_infusion": 1
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "policy_profiles": [
+    {
+      "profile_id": "default_offline_critical_care",
+      "description": "Offline-first conservative default policy for ICU, ED, and OR use.",
+      "vasopressor_requires_central": "conditional",
+      "peripheral_vasopressor_allowed": true,
+      "blood_products_require_dedicated_line": true,
+      "tpn_requires_dedicated_line": true,
+      "propofol_requires_dedicated_line": true,
+      "allow_y_site_capacity": true,
+      "default_y_site_capacity_per_primary": 1,
+      "block_y_site_for_blood_products": true,
+      "block_y_site_for_tpn": true,
+      "block_y_site_for_propofol": true,
+      "unknown_same_lumen_behavior": "avoid",
+      "unknown_y_site_behavior": "caution",
+      "unknown_separate_lumen_behavior": "caution",
+      "precipitation_requires_warning": true,
+      "filter_conflict_behavior": "hard_stop",
+      "snapshot_retention_hours_default": 24,
+      "offline_required": true
+    }
+  ]
+}

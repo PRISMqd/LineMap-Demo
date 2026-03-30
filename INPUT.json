@@ -1,0 +1,19 @@
+{
+  "patient_id": "string_optional",
+  "service": "ICU | ED | OR | floor | other",
+  "active_lines": [
+    {
+      "line_id": "string",
+      "type": "PICC | CVC | peripheral",
+      "status": "active | do_not_use",
+      "lumens": [
+        {
+          "lumen_id": "string",
+          "label": "A | B | 1 | etc",
+          "current_assignments": ["med_alias_or_name"]
+        }
+      ]
+    }
+  ],
+  "requested_medications": ["user_entered_names"]
+}
